@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.nav-link {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    color: #4F4F4F;
+    padding: 10px 16px;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #000;
+}
