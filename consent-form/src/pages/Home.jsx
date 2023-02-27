@@ -13,14 +13,13 @@ function Home() {
 
    const handleSetFirstStep = (name, language) => {
        const selectedLang = languages.find(lang => lang.value === language);
-       console.log(selectedLang);
        initData({name, selectedLang});
        setLanguagge(language);
        setStep((prevStep) => prevStep + 1);
    }
 
-    const handleSave = (answer) => {
-        addAnswer(answer)
+    const handleSave = (answer, audioUrl) => {
+        addAnswer(answer, audioUrl)
         setStep((prevStep) => prevStep + 1);
     }
 
@@ -32,7 +31,6 @@ function Home() {
                  {step === 1 && <FirstStepForm  onSetFirstStep={handleSetFirstStep} />}
                  {step === 2 && <SecondStepForm language={language} onSave={handleSave}/>}
                  {step === 3 && <FinalStep />}
-
               </div>
            </div>
        </div>

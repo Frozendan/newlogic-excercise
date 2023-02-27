@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone, faStop, faPlay, faRedo } from '@fortawesome/free-solid-svg-icons';
 import {useTranslation} from "react-i18next";
@@ -10,9 +10,58 @@ const SecondStepForm = ({language, onSave}) => {
     const [isRecording, setIsRecording] = useState(false);
     const [answer, setAnswer] = useState('');
     const [timeoutId, setTimeoutId] = useState(null);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [audioURL, setAudioURL] = useState('');
+    const mediaRecorderRef = useRef(null);
+    const recognitionRef = useRef(null);
 
-    let recognition = null;
+    //Record functions
+    const handleSpeechRecognition = () => {
+        if(speechSynthesis) speechSynthesis.cancel();
+        recognitionRef.current = new window.webkitSpeechRecognition();
+        recognitionRef.current.lang = language;
+        recognitionRef.current.onresult = event => {
+            const text = event.results[0][0].transcript;
+            ['yes', 'no', 'oui', 'non'].includes(text) && setAnswer(text);
+        };
+        recognitionRef.current.onend = () => {
+            setIsRecording(false);
+        };
+        recognitionRef.current.start();
+    }
+
+    const handleMediaRecorder = () => {
+        navigator
+            .mediaDevices
+            .getUserMedia({ audio: true, video: false })
+            .then(function (stream) {
+                mediaRecorderRef.current = new MediaRecorder(stream);
+                const chunks = [];
+                mediaRecorderRef.current.addEventListener("dataavailable", event => {
+                    chunks.push(event.data);
+                });
+                mediaRecorderRef.current.addEventListener("stop", () => {
+                    const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
+                    const url = URL.createObjectURL(blob);
+                    setAudioURL(url);
+                });
+                mediaRecorderRef.current.start();
+            })
+    }
+
+    const startRecording = useCallback( () => {
+        handleSpeechRecognition();
+        handleMediaRecorder();
+    },[answer, isRecording]);
+
+    const stopRecording = () => {
+        clearTimeout(timeoutId);
+        if (recognitionRef.current) {
+            recognitionRef.current.stop();
+        }
+        if (mediaRecorderRef.current) {
+            mediaRecorderRef.current.stop();
+        }
+    }
 
     useEffect(() => {
         //Check if browser support Web Speech API
@@ -36,60 +85,27 @@ const SecondStepForm = ({language, onSave}) => {
         }
     }, []);
 
+
     useEffect(() => {
         if (isRecording) {
             setTimeoutId(setTimeout(() => {
-                recognition.stop();
+                recognitionRef.current.stop();
                 setIsRecording(false);
             }, 3000));
             startRecording();
         } else {
-            clearTimeout(timeoutId);
-            if (recognition) {
-                recognition.stop();
-            }
+           stopRecording()
         }
 
         return () => {
             clearTimeout(timeoutId);
-            if (recognition) {
-                recognition.stop();
-            }
         };
     }, [isRecording]);
 
-    //Record functions
-    const startRecording = () => {
-        speechSynthesis.cancel();
-        recognition = new window.webkitSpeechRecognition();
-        recognition.onstart = () => {
-            console.log('Recording started');
-        };
-        recognition.onresult = event => {
-            const text = event.results[0][0].transcript;
-            setAnswer(text);
-        };
-        recognition.onend = () => {
-            console.log('Recording ended');
-            setIsRecording(false);
-        };
-        recognition.start();
-        console.log('Recording...');
-    };
+
 
     const handleRecordButtonClick = () => {
        setIsRecording(!isRecording);
-    };
-
-    const playBack = () => {
-        speechSynthesis.cancel();
-        const utterance = setVoice(language, answer);
-        speechSynthesis.speak(utterance);
-        utterance.onend = () => {
-            speechSynthesis.cancel();
-            setIsPlaying(false);
-        };
-        setIsPlaying(true);
     };
 
 
@@ -108,24 +124,13 @@ const SecondStepForm = ({language, onSave}) => {
             </button>}
             {answer && (
                 <>
-                    <div className='flex justify-center items-baseline'>
+                    <div className='flex flex-col items-center'>
 
-                        { isPlaying ? (
-                            <button
-                                onClick={stopPlaying}
-                                className="btn circle default"
-                            >
-                                <FontAwesomeIcon icon={faStop} />
-                            </button>
-                           ) : (
-                            <button
-                                onClick={playBack}
-                                className="btn circle default"
-                            >
-                                <FontAwesomeIcon icon={faPlay} />
-                            </button>
-                            )
-                        }
+                        {audioURL && (
+                            <div className="mb-2">
+                                <audio controls src={audioURL} />
+                            </div>
+                        )}
 
                         <p className="text-gray-700 ml-6">Your answer: "{answer}"</p>
                     </div>
@@ -138,7 +143,7 @@ const SecondStepForm = ({language, onSave}) => {
                             <FontAwesomeIcon icon={faRedo} /> Retry
                         </button>
                         <button
-                            onClick={() => onSave(answer)}
+                            onClick={() => onSave(answer, audioURL)}
                             className="btn primary"
                         >
                             Save
@@ -146,6 +151,7 @@ const SecondStepForm = ({language, onSave}) => {
                     </div>
                 </>
             )}
+
 
         </div>
     );

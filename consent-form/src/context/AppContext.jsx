@@ -7,13 +7,13 @@ const initialState = {
         id: '',
         name: '',
         language: '',
-        answer: ''
+        answer: '',
+        audioUrl: ''
     }
 };
 const reducer = (state, action) => {
     switch (action.type) {
         case actions.INIT_CONSENT:
-            console.log(action.payload.language)
             return {
                 consentsList: [...state.consentsList],
                 newConsent: {...state.newConsent,
@@ -25,6 +25,7 @@ const reducer = (state, action) => {
         case actions.ADD_ANSWER:
             const updatedConsent = {...state.newConsent,
                 answer: action.payload.answer,
+                audioUrl: action.payload.audioUrl
             }
             return {
                 consentsList: [...state.consentsList,
@@ -54,8 +55,8 @@ export const AppContextProvider = ({ children }) => {
         initData : ({name, selectedLang}) => {
             dispatch({type: actions.INIT_CONSENT, payload: {name, language: selectedLang}})
         },
-        addAnswer: (answer) => {
-            dispatch({type: actions.ADD_ANSWER, payload: {answer}})
+        addAnswer: (answer, audioUrl) => {
+            dispatch({type: actions.ADD_ANSWER, payload: {answer, audioUrl}})
         }
     };
 
