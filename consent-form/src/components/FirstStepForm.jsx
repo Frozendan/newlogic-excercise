@@ -22,7 +22,7 @@ function FirstStepForm({ onSetFirstStep }) {
     };
 
     return (
-        <form >
+        <form onSubmit={handleSubmit} method="post">
             <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                     Name
@@ -58,7 +58,7 @@ function FirstStepForm({ onSetFirstStep }) {
                 </div>
             </div>
             <div className="mt-6 flex justify-end">
-                <button onClick={handleSubmit} type="button" className="btn primary">
+                <button type="submit" className="btn primary" >
                     Submit
                 </button>
             </div>

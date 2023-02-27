@@ -8,13 +8,13 @@ import {languages} from "../data/formConst.js";
 
 function Home() {
    const {initData, addAnswer} = useContext(AppContext);
-    const [language, setLanguagge] = useState('en');
+    const [language, setLanguage] = useState('en');
    const [step, setStep] = useState(1);
 
    const handleSetFirstStep = (name, language) => {
        const selectedLang = languages.find(lang => lang.value === language);
        initData({name, selectedLang});
-       setLanguagge(language);
+       setLanguage(language);
        setStep((prevStep) => prevStep + 1);
    }
 
