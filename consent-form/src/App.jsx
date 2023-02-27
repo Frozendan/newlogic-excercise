@@ -21,7 +21,7 @@ function App() {
                           <div className="hidden md:block">
                               <div className="ml-10 flex items-baseline">
                                   <Link to="/" className="nav-link px-3 py-2 rounded-md text-sm font-medium">Home</Link>
-                                  <Link to="/consent" className="nav-link px-3 py-2 rounded-md text-sm font-medium">Consent Form</Link>
+                                  <Link to="/consents" className="nav-link px-3 py-2 rounded-md text-sm font-medium">Consents</Link>
                               </div>
                           </div>
                       </div>

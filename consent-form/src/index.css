@@ -15,3 +15,20 @@
 .nav-link:hover {
     color: #000;
 }
+.btn.default {
+    @apply border border-transparent rounded-md px-4 py-2 bg-gray-500 hover:bg-gray-700 text-white shadow-sm text-sm
+}
+.btn.primary {
+    @apply border border-transparent rounded-md px-4 py-2 bg-indigo-500 hover:bg-indigo-700 text-white shadow-sm text-sm
+}
+
+.btn.circle {
+    @apply w-12 h-12 flex items-center justify-center font-bold py-2 px-4 rounded-full shadow-md
+}
+.btn.green {
+    @apply bg-green-500 hover:bg-green-700 text-white
+}
+.btn.red {
+    @apply bg-red-500 hover:bg-green-700 text-white
+}
+

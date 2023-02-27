@@ -1,30 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
+import { faMicrophone, faStop, faPlay, faRedo } from '@fortawesome/free-solid-svg-icons';
 import {useTranslation} from "react-i18next";
+import {setVoice} from "../Utils/SpeechAPI.js";
 
-const setVoice = (language, text) => {
-    const utterance = new SpeechSynthesisUtterance(text);
-    const voices = speechSynthesis.getVoices();
-    switch (language) {
-        case language.value === 'en':
-            utterance.voice = voices[0];
-            break;
-        case language.value === 'fr':
-            utterance.voice = voices[9];
-            break;
-        default:
-            utterance.voice = voices[0];
-    }
-    return utterance;
-}
 
-const SecondStepForm = ({language}) => {
+const SecondStepForm = ({language, onSave}) => {
     const { t, i18n } = useTranslation();
     const [isRecording, setIsRecording] = useState(false);
-    const [recordedText, setRecordedText] = useState('');
+    const [answer, setAnswer] = useState('');
     const [timeoutId, setTimeoutId] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(false);
 
+    let recognition = null;
 
     useEffect(() => {
         //Check if browser support Web Speech API
@@ -49,30 +37,9 @@ const SecondStepForm = ({language}) => {
     }, []);
 
     useEffect(() => {
-        let recognition = null;
-
-        const startRecording = () => {
-            speechSynthesis.cancel();
-            recognition = new window.webkitSpeechRecognition();
-            recognition.onstart = () => {
-                console.log('Recording started');
-            };
-            recognition.onresult = event => {
-                const text = event.results[0][0].transcript;
-                setRecordedText(text);
-            };
-            recognition.onend = () => {
-                console.log('Recording ended');
-                setIsRecording(false);
-            };
-            recognition.start();
-            console.log('Recording...');
-        };
-
         if (isRecording) {
             setTimeoutId(setTimeout(() => {
                 recognition.stop();
-                console.log('Recording stopped');
                 setIsRecording(false);
             }, 3000));
             startRecording();
@@ -80,7 +47,6 @@ const SecondStepForm = ({language}) => {
             clearTimeout(timeoutId);
             if (recognition) {
                 recognition.stop();
-                console.log('Recording stopped');
             }
         }
 
@@ -88,31 +54,99 @@ const SecondStepForm = ({language}) => {
             clearTimeout(timeoutId);
             if (recognition) {
                 recognition.stop();
-                console.log('Recording stopped');
             }
         };
     }, [isRecording]);
+
+    //Record functions
+    const startRecording = () => {
+        speechSynthesis.cancel();
+        recognition = new window.webkitSpeechRecognition();
+        recognition.onstart = () => {
+            console.log('Recording started');
+        };
+        recognition.onresult = event => {
+            const text = event.results[0][0].transcript;
+            setAnswer(text);
+        };
+        recognition.onend = () => {
+            console.log('Recording ended');
+            setIsRecording(false);
+        };
+        recognition.start();
+        console.log('Recording...');
+    };
 
     const handleRecordButtonClick = () => {
        setIsRecording(!isRecording);
     };
 
+    const playBack = () => {
+        speechSynthesis.cancel();
+        const utterance = setVoice(language, answer);
+        speechSynthesis.speak(utterance);
+        utterance.onend = () => {
+            speechSynthesis.cancel();
+            setIsPlaying(false);
+        };
+        setIsPlaying(true);
+    };
+
+
     return (
         <div className="flex flex-col items-center">
-            <p className="text-xl text-gray-700 my-6 whitespace-pre-line">
+            <p className="text-lg text-gray-700 my-6 whitespace-pre-line">
                 {t('ConsentForm.Text')}
             </p>
-            <button
+            {!answer && <button
                 onClick={handleRecordButtonClick}
-                className={`flex items-center justify-center bg-${
+                className={`btn circle ${
                     isRecording ? 'red' : 'green'
-                }-500 hover:bg-${isRecording ? 'red' : 'green'}-700 text-white font-bold py-2 px-4 rounded-full shadow-md`}
+                }`}
             >
-                <FontAwesomeIcon icon={isRecording ? faStop : faMicrophone} />
-            </button>
-            {recordedText && (
-                <p className="text-gray-700 mt-6">{t('RecordedText')}: {recordedText}</p>
+                <FontAwesomeIcon icon={isRecording ? faStop : faMicrophone}/>
+            </button>}
+            {answer && (
+                <>
+                    <div className='flex justify-center items-baseline'>
+
+                        { isPlaying ? (
+                            <button
+                                onClick={stopPlaying}
+                                className="btn circle default"
+                            >
+                                <FontAwesomeIcon icon={faStop} />
+                            </button>
+                           ) : (
+                            <button
+                                onClick={playBack}
+                                className="btn circle default"
+                            >
+                                <FontAwesomeIcon icon={faPlay} />
+                            </button>
+                            )
+                        }
+
+                        <p className="text-gray-700 ml-6">Your answer: "{answer}"</p>
+                    </div>
+
+                    <div className="mt-10 flex w-full justify-end">
+                        <button
+                        onClick={() => setAnswer('')}
+                        className="btn default mr-2"
+                        >
+                            <FontAwesomeIcon icon={faRedo} /> Retry
+                        </button>
+                        <button
+                            onClick={() => onSave(answer)}
+                            className="btn primary"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </>
             )}
+
         </div>
     );
 };
